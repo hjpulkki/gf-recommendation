@@ -13,7 +13,7 @@ Move to the project folder and clone pydplan. It is used to calculate Buhlmann d
 
 ## Install environment
 
-You need python 3.13 and poetry from https://python-poetry.org/docs/
+You need python 3.13, and poetry 8.0 from https://python-poetry.org/docs/
 
 Install python environment with poetry
 `poetry install`
