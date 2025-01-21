@@ -7,9 +7,9 @@ If you are using windows, do yourself a favor and install WSL. After that you ca
 
 ## Clone pydplan
 
-Move to the project folder and clone pydplan. It is used to calculate Buhlmann dive profiles.
+Move to the project folder and clone pydplan. It is used to calculate Buhlmann dive profiles. My fork has some needed functionality that the original version from eianlei does not have.
 
-`git clone https://github.com/eianlei/pydplan.git`
+`git clone https://github.com/hjpulkki/pydplan.git`
 
 ## Install environment
 

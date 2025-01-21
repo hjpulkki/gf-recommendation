@@ -20,8 +20,17 @@ d = 0.002929
 f = 0.918547
 g = -170.304442
 
+FEET_IN_METER = 3.2808399
+
+# These are based on PADI tables Product No. 66054 Ver 1.2 (Rev. 02/03)
+# https://www.a1scubadiving.com/wp-content/uploads/2018/06/PADI-Recreational-Dive-Table-Planner.pdf
+btt = pd.read_csv("../data/bottom_time.csv")
+sfi = pd.read_csv("../data/surface_interval.csv")
+rnt = pd.read_csv("../data/residual_nitrogen_time.csv")
+
+
 def get_standair_tdt(D, T, pdcs):
-    D_feet = D * 3.2808399
+    D_feet = D * FEET_IN_METER
     logit = math.log(pdcs / (1 - pdcs))
     numerator = b*(D_feet-c)*(1-np.exp(-d * T**f))
     TDT = numerator / (logit - a) + g
@@ -94,7 +103,7 @@ def fit_gf_to_tdt(T, D, TDT, he=0, o2=21, verbose=False):
 
 def parallelize_dataframe(df, func):
     num_cores = cpu_count()
-    df_split = np.array_split(df, num_cores)
+    df_split = [df.iloc[i::num_cores] for i in range(num_cores)]
     with Pool(num_cores) as pool:
         df = pd.concat(pool.map(func, df_split))
     return df
@@ -102,4 +111,83 @@ def parallelize_dataframe(df, func):
 
 def fit_gf_to_tdt_df(df):
     df['gf_high'] = df.apply(lambda row: fit_gf_to_tdt(row['T'], row['D'], row['TDT']), axis=1)
+    return df
+
+
+def second_dive_no_dec_time(first_dive_time, surface_time, D_feet):
+    """Determine of the maximum no decompression time for a second dive, based on the PADI dive table."""
+    depths = btt.columns[1:].astype(int)
+    planned_depth = depths[depths >= D_feet].values[0]
+    possible_pressure_groups = btt.loc[btt[planned_depth.astype(str)] >= first_dive_time, 'Pressure group'].values
+    if len(possible_pressure_groups) == 0:
+        # The first dive to {D_feet} feet for {first_dive_time} minutes is not a no deco dive.
+        return 0
+    pressure_group = btt.loc[btt[planned_depth.astype(str)] >= first_dive_time, 'Pressure group'].values[0]
+    
+    next_pressure_group = sfi.loc[sfi[pressure_group] >= surface_time,'Next pressure group'].values[0]
+
+    residual_nitrogen = rnt.loc[rnt['Depth (fsw)'] == planned_depth, next_pressure_group].values[0]
+    
+    no_deco_time = (btt[planned_depth.astype(str)] - residual_nitrogen).max()
+    return no_deco_time
+
+def get_max_ceiling(d_meters, dive_durations, surface_time, gf_high, plot_figure=False):
+    """Determine the maximum ceiling for the second dive, based on ZHL-16C model with symmetric gradient factors."""
+    first_dive_gf = 115
+
+    dive_plan = DivePlan()
+    dive_plan.setDefaults()
+    
+    dive_plan.bottomTime = 60*dive_durations[0]
+    dive_plan.bottomDepth = d_meters
+    
+    dive_plan.maxDepth = dive_plan.bottomDepth
+    dive_plan.descRate  =        99 / 60.0
+    dive_plan.ascRateToDeco =    10 / 60.0
+    dive_plan.ascRateAtDeco =    3  / 60.0
+    dive_plan.ascRateToSurface = 1  / 60.0
+    dive_plan.descTime = dive_plan.bottomDepth / dive_plan.descRate
+    
+    dive_plan.GFhigh = first_dive_gf/100
+    dive_plan.GFlow = first_dive_gf/100
+    
+    # Set gasses for just air
+    dive_plan.tankList[TankType.BOTTOM].o2 = 21
+    dive_plan.tankList[TankType.BOTTOM].he = 0
+    dive_plan.tankList[TankType.DECO1].use = False
+    dive_plan.tankList[TankType.DECO2].use = False
+    dive_plan.tankList[TankType.TRAVEL].use = False
+    
+    dive_plan.nDives = len(dive_durations)
+    dive_plan.surfaceTime = surface_time
+    dive_plan.diveDurations = [60*t for t in dive_durations]
+    dive_plan.diveGFs = [first_dive_gf/100, gf_high/100]
+
+    try:
+        model_run = calculatePlan(dive_plan)
+    except ValueError:
+        # This is probably a deco dive because of going over the iteration limit
+        return -100
+    
+    if plot_figure:
+        plt.plot([x.time/60 for x in dive_plan.profileSampled], [-x.depth for x in dive_plan.profileSampled])
+        plt.title(f"Dive profile. GF: {dive_plan.GFlow*100:.0f}/{dive_plan.GFhigh*100:.0f}")
+    
+    max_ceiling = max([max(mp.ceilings) for mp in model_run])
+    return max_ceiling
+
+def def_find_no_deco_gf_high(d_meters, dive_times, surface_time):
+    """Find out the high GF which barely allow doing the second dive without decompression stops."""
+    for gf_high in range(120,50,-1):
+        max_ceiling = get_max_ceiling(d_meters, dive_times, surface_time, gf_high, plot_figure=False)
+        if max_ceiling > 0:
+            get_max_ceiling(d_meters, dive_times, surface_time, gf_high, plot_figure=True)
+            return gf_high
+            
+    print("Error: Dive is not possible to do with out deco with gf_high <= 120")
+    return -1
+
+def get_gf_to_repetative_dives(df):
+    """Process a dataframe with def_find_no_deco_gf_high"""
+    df['gf_high'] = df.apply(lambda x: def_find_no_deco_gf_high(x['depth'], [x['first_dive_time'], x['no_deco_time']], x['surface_time']), axis=1)
     return df
