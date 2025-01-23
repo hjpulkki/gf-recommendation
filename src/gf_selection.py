@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from multiprocessing import Pool, cpu_count
+import plotly.graph_objects as go
+import plotly.express as px
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "pydplan"))
 sys.path.insert(0, project_root)
@@ -40,19 +42,38 @@ def get_standair_tdt(D, T, pdcs):
     
     return TDT
 
-def standair_plot(D, T_ref, pdcs_ref):    
-    T = np.linspace(0,T_ref*2,100)
-    ax = plt.gca()
-    for pdcs in [0.01, 0.016, 0.02, 0.026, 0.03]:
+def standair_plot(D, T_ref, pdcs_ref):
+    T = np.linspace(0, T_ref * 2, 100)
+    fig = go.Figure()
+
+    for pdcs in [0.01, 0.015, 0.02, 0.025, 0.03,]:
         TDT = get_standair_tdt(D, T, pdcs)
-        
-        plt.plot(T,TDT, label=f'pDCS ={pdcs}')
-    plt.title(f'StandardAir model for {D:.1f}m')
-    
+        fig.add_trace(go.Scatter(
+            x=T,
+            y=TDT,
+            mode='lines',
+            name=f'pDCS = {pdcs}'
+        ))
+
     TDT_ref = get_standair_tdt(D, T_ref, pdcs_ref)
-    ax.plot(T_ref, TDT_ref, label="Your plan", marker="o", linewidth=0)
-    ax.set_ylim([0, TDT_ref*2])
-    plt.legend()
+    fig.add_trace(go.Scatter(
+        x=[T_ref],
+        y=[TDT_ref],
+        mode='markers',
+        name='Your plan',
+        marker=dict(size=10, color='red', symbol='circle')
+    ))
+
+    fig.update_layout(
+        title=f'StandardAir Model for {D:.1f}m',
+        xaxis_title='T',
+        yaxis_title='TDT',
+        yaxis=dict(range=[0, max(10, TDT_ref * 2)]),
+        legend=dict(title='Legend'),
+        template='plotly_white'
+    )
+    fig.show()
+
 
 def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
     dive_plan = DivePlan()
@@ -87,9 +108,20 @@ def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
     tdt_gf = dive_time-T
     
     if plot_figure:
-        plt.plot([x.time/60 for x in dive_plan.profileSampled], [-x.depth for x in dive_plan.profileSampled])
-        plt.title(f"Dive profile. Gas: {o2}/{he} GF: {dive_plan.GFlow*100:.0f}/{dive_plan.GFhigh*100:.0f}")
-    
+        fig = px.line(
+            x=[x.time/60 for x in dive_plan.profileSampled], 
+            y=[-x.depth for x in dive_plan.profileSampled], 
+        )
+        
+        fig.update_layout(
+        title=f"Dive profile. Gas: {o2}/{he} GF: {dive_plan.GFlow*100:.0f}/{dive_plan.GFhigh*100:.0f}",
+            xaxis_title='Time',
+            yaxis_title='Depth',
+            legend=dict(title='Legend'),
+            template='plotly_white'
+        )
+        fig.show()
+        
     return tdt_gf
 
 def fit_gf_to_tdt(T, D, TDT, he=0, o2=21, verbose=False):
