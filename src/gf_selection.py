@@ -7,12 +7,15 @@ from matplotlib import pyplot as plt
 from multiprocessing import Pool, cpu_count
 import plotly.graph_objects as go
 import plotly.express as px
+import plotly.io as pio
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "pydplan"))
 sys.path.insert(0, project_root)
 
 from pydplan_profiletools import calculatePlan, DivePlan, TankType
 
+
+pio.renderers.default = 'svg'
 
 # Source: Van Liew, H. D., and E. T. Flynn. A simple probabilistic model for estimating the risk of standard air dives. NEDU TR 04-42, Navy Experimental Diving Unit, 2004.
 a = -6.022169
