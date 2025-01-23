@@ -73,6 +73,7 @@ def standair_plot(D, T_ref, pdcs_ref):
         template='plotly_white'
     )
     fig.show()
+    print(f"According to the StandardAir model [7], the total decompression duration for this dive is {TDT_ref:.0f} minutes.")
 
 
 def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
@@ -130,6 +131,7 @@ def fit_gf_to_tdt(T, D, TDT, he=0, o2=21, verbose=False):
             if verbose:
                 print(f"Found {gf_high} for {T} min and {D}m")
             break
+    print(f"For a total decompression time of {TDT:.0f} minutes (on 21/{he}), the Gradient Factors can be set to {gf_high}/{gf_high}.")
     return gf_high
 
 
