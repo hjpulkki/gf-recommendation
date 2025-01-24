@@ -66,14 +66,14 @@ def standair_plot(D, T_ref, pdcs_ref):
 
     fig.update_layout(
         title=f'StandardAir Model for {D:.1f}m',
-        xaxis_title='T',
-        yaxis_title='TDT',
+        xaxis_title='Bottom time (minutes)',
+        yaxis_title='Total Decompression Time (minutes)',
         yaxis=dict(range=[0, max(10, TDT_ref * 2)]),
-        legend=dict(title='Legend'),
+        legend=dict(title='Probability of DCS'),
         template='plotly_white'
     )
     fig.show()
-    print(f"According to the StandardAir model [7], the total decompression duration for this dive is {TDT_ref:.0f} minutes.")
+    print(f"According to the StandardAir model [7], the Total Decompression Time (TDT) for this dive should be {TDT_ref:.0f} minutes with probability of Decompression Sickness (DCS) being {100*pdcs:.1f}%.")
 
 
 def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
