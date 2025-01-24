@@ -72,8 +72,9 @@ def standair_plot(D, T_ref, pdcs_ref):
         legend=dict(title='Probability of DCS'),
         template='plotly_white'
     )
-    fig.show()
+    # fig.show()
     print(f"According to the StandardAir model [7], the Total Decompression Time (TDT) for this dive should be {TDT_ref:.0f} minutes with probability of Decompression Sickness (DCS) being {100*pdcs:.1f}%.")
+    return fig
 
 
 def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
@@ -107,7 +108,8 @@ def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
 
     dive_time = dive_plan.profileSampled[-1].time/60
     tdt_gf = dive_time-T
-    
+
+    fig = None
     if plot_figure:
         fig = px.line(
             x=[x.time/60 for x in dive_plan.profileSampled], 
@@ -121,13 +123,13 @@ def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
             legend=dict(title='Legend'),
             template='plotly_white'
         )
-        fig.show()
-        
-    return tdt_gf
+
+    return tdt_gf, fig
 
 def fit_gf_to_tdt(T, D, TDT, he=0, o2=21, verbose=False):
     for gf_high in range(100, 5, -1):
-        if get_gf_tdt(T, D, gf_high, he, o2) > TDT:
+        deco_time, _ = get_gf_tdt(T, D, gf_high, he, o2)
+        if deco_time > TDT:
             if verbose:
                 print(f"Found {gf_high} for {T} min and {D}m")
             break
