@@ -18,19 +18,11 @@ Move to the project folder and clone pydplan. It is used to calculate Buhlmann d
 You need python 3.13, and poetry 8.0 from https://python-poetry.org/docs/
 
 Install python environment with poetry
-`poetry install`
-
-Activate poetry shell
-
-`poetry shell`
-
-Register the jupyter kernel
-
-`python -m ipykernel install --user --name=gf-recommendation --display-name "Python (gf-recommendation)"`
+`poetry install --no-root`
 
 Run jupyter notebook
 
-`python -m jupyter notebook`
+`poetry run jupyter notebook`
 
 You can now navigate to the notebooks dictionary and run the notebooks yourself.
 
