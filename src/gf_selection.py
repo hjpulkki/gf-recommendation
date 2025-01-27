@@ -61,7 +61,7 @@ def standair_plot(D, T_ref, pdcs_ref):
         y=[TDT_ref],
         mode='markers',
         name='Your plan',
-        marker=dict(size=10, color='red', symbol='circle')
+        marker=dict(size=10, color='red', symbol='circle'),
     ))
 
     fig.update_layout(

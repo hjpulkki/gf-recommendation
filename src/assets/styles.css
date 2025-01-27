@@ -56,6 +56,7 @@ button, .card button {
     cursor: pointer;         /* Hand pointer on hover */
     text-align: center;      /* Center-align text */
     display: inline-block;   /* Prevent weird layout shifts */
+    margin-bottom: "20px";
 }
 
 button:hover, .card button:hover {
