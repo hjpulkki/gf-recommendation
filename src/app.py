@@ -1,7 +1,9 @@
 import dash
 from dash import html, dcc, Input, Output, State
 import math
-import gf_selection  # Assuming this is your custom module
+from src import gf_selection
+PORT = "8000"
+ADDRESS = "0.0.0.0"
 
 # Initialize the app
 app = dash.Dash(
@@ -11,6 +13,8 @@ app = dash.Dash(
     ],
 )
 app.title = "Dive Gradient Factor Calculator"
+server = app.server
+
 
 # Layout
 app.layout = html.Div(
@@ -357,4 +361,8 @@ def calculate_final_results(n_clicks, n_clicks2, n_clicks3, n_clicks4, D, T, o2_
 
 # Run the app
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(
+        port=PORT,
+        host=ADDRESS,
+        debug=True
+    )

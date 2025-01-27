@@ -8,10 +8,16 @@ from multiprocessing import Pool, cpu_count
 import plotly.graph_objects as go
 import plotly.express as px
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "pydplan"))
-sys.path.insert(0, project_root)
+# script_dir = Path(__file__).resolve().parent
+#data_dir = script_dir.parent / "data"
 
-from pydplan_profiletools import calculatePlan, DivePlan, TankType
+project_folder = os.path.join(os.path.dirname(__file__), "..")
+pyplan_root = os.path.join(project_folder, "pydplan")
+data_folder = os.path.join(project_folder, "data")
+
+sys.path.insert(0, os.path.abspath(pyplan_root))
+
+from pydplan.pydplan_profiletools import calculatePlan, DivePlan, TankType
 
 
 # Source: Van Liew, H. D., and E. T. Flynn. A simple probabilistic model for estimating the risk of standard air dives. NEDU TR 04-42, Navy Experimental Diving Unit, 2004.
@@ -26,9 +32,9 @@ FEET_IN_METER = 3.2808399
 
 # These are based on PADI tables Product No. 66054 Ver 1.2 (Rev. 02/03)
 # https://www.a1scubadiving.com/wp-content/uploads/2018/06/PADI-Recreational-Dive-Table-Planner.pdf
-btt = pd.read_csv("../data/bottom_time.csv")
-sfi = pd.read_csv("../data/surface_interval.csv")
-rnt = pd.read_csv("../data/residual_nitrogen_time.csv")
+btt = pd.read_csv(os.path.join(data_folder, "bottom_time.csv"))
+sfi = pd.read_csv(os.path.join(data_folder, "surface_interval.csv"))
+rnt = pd.read_csv(os.path.join(data_folder, "residual_nitrogen_time.csv"))
 
 
 def get_standair_tdt(D, T, pdcs):

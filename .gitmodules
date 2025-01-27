@@ -1,0 +1,3 @@
+[submodule "pydplan"]
+	path = pydplan
+	url = https://github.com/hjpulkki/pydplan.git
