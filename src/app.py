@@ -2,8 +2,6 @@ import dash
 from dash import html, dcc, Input, Output, State
 import math
 from src import gf_selection
-PORT = "8000"
-ADDRESS = "0.0.0.0"
 
 # Initialize the app
 app = dash.Dash(
@@ -24,7 +22,7 @@ app.layout = html.Div(
             # Dive Gradient Factor Calculator
             > *"Any idiot can build a bridge that stands, but it takes an engineer to build a bridge that barely stands."*
 
-            Diving algorithms often include multiple layers of conservatism, but understanding the actual limits is crucial. Many diving accidents occur within these so-called safe limits [11](#references), which highlights the importance of knowing where those boundaries truly lie. By using this calculator, you'll see that sometimes the safe limits can surprisingly approach — or even fall below—gradient factor values that might have otherwise been considered conservative.
+            Diving algorithms often include multiple layers of conservatism, but understanding the actual limits is crucial. Many diving accidents occur within these so-called safe limits [[11]](#references), which highlights the importance of knowing where those boundaries truly lie. By using this calculator, you'll see that sometimes the safe limits can surprisingly approach — or even fall below—gradient factor values that might have otherwise been considered conservative.
 
             This app serves as a tool for calculating Gradient Factor (GF) recommendations for your planned dive. It takes into account various parameters that influence decompression and risk. Arrows (↓ and ↑) are used to indicate whether a specific factor decreases (↓) or increases (↑) associated risks or considerations.
             """,
@@ -56,7 +54,7 @@ app.layout = html.Div(
                                 dcc.Markdown(
                                     """
                                     ### ↓ Adjust Gradient Factors Based on PRT
-                                    When unadjusted, the ZHL-16C decompression model may produce dive profiles with insufficient Total Decompression Time (TDT). The StandardAir model enables us to determine the appropriate TDT based on experimental dives conducted by the U.S. Navy. [6](#references)[7](#references) The model can be used to estimate the probability of decompression sickness or to calculate Total Decompression Time (TDT) for a given dive plan and selected accepted rate of DCS.
+                                    When unadjusted, the ZHL-16C decompression model may produce dive profiles with insufficient Total Decompression Time (TDT). The StandardAir model enables us to determine the appropriate TDT based on experimental dives conducted by the U.S. Navy. [[6]](#references)[[7]](#references) The model can be used to estimate the probability of decompression sickness or to calculate Total Decompression Time (TDT) for a given dive plan and selected accepted rate of DCS.
                                     """,
                                     style={"marginBottom": "20px"},
                                 ),
@@ -84,7 +82,7 @@ app.layout = html.Div(
             [
                 html.Div([dcc.Markdown("""
                 ### ↑ Compensate for Helium Percentage
-                Current research indicates that helium does not significantly alter decompression obligations. [8](#references) However, dive computers that account for helium may introduce additional conservatism. To mitigate this, you can adjust the GF High values accordingly.
+                Current research indicates that helium does not significantly alter decompression obligations. [[8]](#references) However, dive computers that account for helium may introduce additional conservatism. To mitigate this, you can adjust the GF High values accordingly.
                 """)]),
                 html.Label("Helium percentage (He%):"),
                 dcc.Input(id="he_percentage", type="number", value=0),
@@ -100,7 +98,7 @@ app.layout = html.Div(
             [
                 html.Div([dcc.Markdown("""
                 ### ↓ Surface Time Adjustment
-                Angelini recommends reducing Gradient Factors for surface intervals shorter than 3 hours. [5](#references) For a second dive, they suggest subtracting 15 points from the GF High and adding 1 point back every 12 minutes. However, a [comparison with PADI dive tables](https://nbviewer.org/github/hjpulkki/gf-recommendation/blob/main/notebooks/Repetative-dives-analysis.ipynb) indicates a stronger effect: for dives between 20 m and 40 m with bottom times at the no-decompression limit, you should subtract 37 points and add 1 point back every 5 minutes.
+                Angelini recommends reducing Gradient Factors for surface intervals shorter than 3 hours. [[5]](#references) For a second dive, they suggest subtracting 15 points from the GF High and adding 1 point back every 12 minutes. However, a [comparison with PADI dive tables](https://nbviewer.org/github/hjpulkki/gf-recommendation/blob/main/notebooks/Repetative-dives-analysis.ipynb) indicates a stronger effect: for dives between 20 m and 40 m with bottom times at the no-decompression limit, you should subtract 37 points and add 1 point back every 5 minutes.
                 """)]),
                 html.Label("Surface time in hours:"),
                 dcc.Input(id="surface_time", type="number", value=10),
@@ -118,11 +116,11 @@ app.layout = html.Div(
             ### ↑↓ Other factors
                          
             ↓↑ Personal adjustments
-            If you are not as fit as US navy divers, you should probably increase the safety margin. Traditionally age has thought to increase decompression sickness, but analysis of DCS cases shows it to be more likely with younger divers, likely because of less conservatism. [11](references)
+            If you are not as fit as US navy divers, you should probably increase the safety margin. Traditionally age has thought to increase decompression sickness, but analysis of DCS cases shows it to be more likely with younger divers, likely because of less conservatism. [[11]](references)
 
-            ↑ Are you planning to exercise within 24 hours before diving? Some studies suggest this may decrease the likelihood of decompression sickness (DCS). [1](#references)
+            ↑ Are you planning to exercise within 24 hours before diving? Some studies suggest this may decrease the likelihood of decompression sickness (DCS). [[1]](#references)
 
-            ↑ Have you implemented other pre-dive interventions [1](#references), such as:
+            ↑ Have you implemented other pre-dive interventions [[1]](#references), such as:
             - Oxygen breathing
             - Exogenous nitric oxide administration
             - Whole-body vibration
@@ -135,9 +133,9 @@ app.layout = html.Div(
             dcc.Markdown("""
         ### Low Gradient Factor
 
-        The purpose of the low gradient factor (GF low) is to create deep stops similar to bubble models. However, studies show that these stops are not beneficial. [1](#references)[3](#references)[9](#references) 
+        The purpose of the low gradient factor (GF low) is to create deep stops similar to bubble models. However, studies show that these stops are not beneficial. [[1]](#references)[[3]](#references)[[9]](#references) 
 
-        It is recommended to set GF low to at least 55% [6](#references), or equal to GF high [4](#references). Additionally, GF low can be adjusted to counteract how ZH-L16c "b" coefficients deviate from modern algorithms developed by the U.S. Navy. One suggestion is to set GF low to 83% of GF high. [10](#references) The value could be [further adjusted](https://thetheoreticaldiver.org/wordpress/index.php/2019/06/16/short-comment-on-doolettes-gradient-factors-in-a-post-deep-stops-world/) for extremely deep dives.
+        It is recommended to set GF low to at least 55% [[6]](#references), or equal to GF high [[4]](#references). Additionally, GF low can be adjusted to counteract how ZH-L16c "b" coefficients deviate from modern algorithms developed by the U.S. Navy. One suggestion is to set GF low to 83% of GF high. [[10]](#references) The value could be [further adjusted](https://thetheoreticaldiver.org/wordpress/index.php/2019/06/16/short-comment-on-doolettes-gradient-factors-in-a-post-deep-stops-world/) for extremely deep dives.
         
         """)
         ], id="low-gradient-info", className="card"),
@@ -146,16 +144,16 @@ app.layout = html.Div(
             # Considerations During the Dive 
 
             ↓ Are you feeling cold?  
-            Pay particular attention if you are cold during decompression but not during the bottom phase, as this can impact DCS risk. [1](#references)
+            Pay particular attention if you are cold during decompression but not during the bottom phase, as this can impact DCS risk. [[1]](#references)
 
             ↓ How well hydrated are you?  
-            Proper hydration can reduce the risk of DCS, but avoid overhydration due to its own complications. [1](#references)
+            Proper hydration can reduce the risk of DCS, but avoid overhydration due to its own complications. [[1]](#references)
 
             ↓ Did you engage in exercise at depth?  
-            Exercise during the bottom phase of a dive can increase the risk of DCS. [1](#references)
+            Exercise during the bottom phase of a dive can increase the risk of DCS. [[1]](#references)
 
             ↓ Would you like to perform a safety stop after mandatory decompression stops?  
-            Safety stops have greater significance during decompression dives compared to no-decompression dives. [5](#references)
+            Safety stops have greater significance during decompression dives compared to no-decompression dives. [[5]](#references)
 
             ↓ Are you actually making critical decisions based on a random web page?
             """)
@@ -180,7 +178,7 @@ app.layout = html.Div(
 
             [8](https://diving-rov-specialists.com/index_htm_files/scient-c_55-us-navy-trimix-not-more-efficient-heliox.pdf) Doolette, David J., Keith A. Gault, and Wayne A. Gerth. "Decompression from He-N₂-O₂ (trimix) bounce dives is not more efficient than from He-O₂ (heliox) bounce dives." Navy Experimental Diving Unit, Panama City (2015).
 
-            [9](https://www.uhms.org/images/Publications/Workshops/DDS_Final.pdf#page=202) Blatteau JE, Hugon M, Gardette B. "Deep stops during decompression from 50 to 100 msw didn’t reduce bubble formation in man." In: Bennett PB, Wienke BR, Mitchell SJ, editors. Decompression and the Deep Stop. Undersea and Hyperbaric Medical Society Workshop; 2008 Jun 24-25; Salt Lake City (UT). Durham (NC): Undersea and Hyperbaric Medical Society; 2009. p. 195-206.
+            [9](https://www.uhms.org/images/Publications/Workshops/DDS_Final.pdf#page=202) Blatteau JE, Hugon M, Gardette B. "Deep stops during decompression from 50 to 100 msw didn't reduce bubble formation in man." In: Bennett PB, Wienke BR, Mitchell SJ, editors. Decompression and the Deep Stop. Undersea and Hyperbaric Medical Society Workshop; 2008 Jun 24-25; Salt Lake City (UT). Durham (NC): Undersea and Hyperbaric Medical Society; 2009. p. 195-206.
 
             [10](https://indepthmag.com/gradient-factors-in-a-post-deep-stops-world/) Doolette, D. (2019, May 29). Gradient Factors in a Post-Deep Stops World.
                          
@@ -231,9 +229,9 @@ def calculate_initial_results(n_clicks, D, T, o2_percentage):
 
     Pressure Root Time (PRT) for your dive is {prt:.1f}.
     
-    According to research, the ZHL-16C decompression algorithm may need adjustment if the PRT exceeds 25. [6](#references) This value can be directly used to choose your GF with either [analysis in this repository](https://nbviewer.org/github/hjpulkki/gf-recommendation/blob/main/notebooks/PRT_and_GF.ipynb) or by using a graph from Fraedrich [2](#references) also mentioned in the [Theoretical diver blog](https://thetheoreticaldiver.org/wordpress/index.php/2019/06/16/setting-gradient-factors-based-on-published-probability-of-dcs/).
+    According to research, the ZHL-16C decompression algorithm may need adjustment if the PRT exceeds 25. [[6]](#references) This value can be directly used to choose your GF with either [analysis in this repository](https://nbviewer.org/github/hjpulkki/gf-recommendation/blob/main/notebooks/PRT_and_GF.ipynb) or by using a graph from Fraedrich [2]](#references) also mentioned in the [Theoretical diver blog](https://thetheoreticaldiver.org/wordpress/index.php/2019/06/16/setting-gradient-factors-based-on-published-probability-of-dcs/).
 
-    We can also calculate the equivalent air depth (EAD). It can be used to plan a dive with similar nitrogen load and decompression obligation to be approximated using the StandardAir model. [7]
+    We can also calculate the equivalent air depth (EAD). It can be used to plan a dive with similar nitrogen load and decompression obligation to be approximated using the StandardAir model. [[7]](#references)
 
     Equivalent Air Depth (EAD): {EAD:.1f} meters
     """
@@ -361,8 +359,4 @@ def calculate_final_results(n_clicks, n_clicks2, n_clicks3, n_clicks4, D, T, o2_
 
 # Run the app
 if __name__ == "__main__":
-    app.run_server(
-        port=PORT,
-        host=ADDRESS,
-        debug=True
-    )
+    app.run_server(debug=True)
