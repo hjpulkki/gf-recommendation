@@ -139,7 +139,8 @@ def fit_gf_to_tdt(T, D, TDT, he=0, o2=21, verbose=False):
             if verbose:
                 print(f"Found {gf_high} for {T} min and {D}m")
             break
-    print(f"For a total decompression time of {TDT:.0f} minutes (on 21/{he}), the Gradient Factors can be set to {gf_high}/{gf_high}.")
+    if verbose:
+        print(f"For a total decompression time of {TDT:.0f} minutes (on 21/{he}), the Gradient Factors can be set to {gf_high}/{gf_high}.")
     return gf_high
 
 
@@ -152,7 +153,7 @@ def parallelize_dataframe(df, func):
 
 
 def fit_gf_to_tdt_df(df):
-    df['gf_high'] = df.apply(lambda row: fit_gf_to_tdt(row['T'], row['D'], row['TDT']), axis=1)
+    df['gf_high'] = df.apply(lambda row: fit_gf_to_tdt(row['T'], row['D'], row['TDT'], verbose=False), axis=1)
     return df
 
 

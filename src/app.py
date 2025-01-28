@@ -30,11 +30,11 @@ app.layout = html.Div(
         ),
         html.Div(
             [
-                html.Label("Depth in meters (D):"),
+                html.Label("Depth in meters:"),
                 dcc.Input(id="depth", type="number", value=30),
-                html.Label("Bottom time in minutes (T):"),
+                html.Label("Bottom time in minutes:"),
                 dcc.Input(id="time", type="number", value=50),
-                html.Label("Oxygen percentage (O₂%):"),
+                html.Label("Oxygen percentage:"),
                 dcc.Input(id="o2_percentage", type="number", value=34),
                 html.Button("Next", id="initial-calculate-button", n_clicks=0),
                 html.Div(id="initial-results", style={"marginTop": "10px"}),
@@ -84,7 +84,7 @@ app.layout = html.Div(
                 ### ↑ Compensate for Helium Percentage
                 Current research indicates that helium does not significantly alter decompression obligations. [[8]](#references) However, dive computers that account for helium may introduce additional conservatism. To mitigate this, you can adjust the GF High values accordingly.
                 """)]),
-                html.Label("Helium percentage (He%):"),
+                html.Label("Helium percentage:"),
                 dcc.Input(id="he_percentage", type="number", value=0),
                 html.Div(html.Button("Next", id="he-next-button", n_clicks=0)),
                 html.Div(id="he-results", style={"marginTop": "10px"}),
