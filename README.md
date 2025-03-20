@@ -1,7 +1,7 @@
 # Introduction
 Buhlmann ZHL-16C is commonly used in diving computers with gradient factor parameters. Selecting these parameters is not that straight forward, and same parameters should not be used for all diving profiles. This project aims to guide users to select the correct parameters for their planned dive.
 
-If you are just looking to use the tool, you can access the planning app [in heroku](https://gf-recommendation-b3ee67272911.herokuapp.com/)
+If you are just looking to use the tool, you can access the [Planning app](http://ec2-54-152-31-232.compute-1.amazonaws.com/) on AWS.
 
 You can check out the [main notebook with nbviewer](https://nbviewer.org/github/hjpulkki/gf-recommendation/blob/main/notebooks/GF_recommendation.ipynb).
 
@@ -17,6 +17,9 @@ You need python 3.13, and [poetry](https://python-poetry.org/docs/) 2.0.1 from
 
 Install python environment with poetry
 `poetry install`
+
+Make sure you also clone the submodules before trying to run the code
+`git submodule update --init --recursive`
 
 ## Run code
 
@@ -57,6 +60,21 @@ Release the app:
 Open the app:
 `heroku open`
 
+## Build docker and run as a service
+
+`sudo docker build -t gf-server .`
+
+Test that it works
+
+`sudo docker run -p 80:8050 gf-server`
+
+Create service
+
+`sudo cp gf-server.service /etc/systemd/system/gf-server.service`
+
+`sudo systemctl daemon-reload`
+`sudo systemctl enable gf-server`
+`sudo systemctl restart gf-server`
 
 # Disclaimer
 

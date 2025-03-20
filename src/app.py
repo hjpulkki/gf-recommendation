@@ -359,4 +359,4 @@ def calculate_final_results(n_clicks, n_clicks2, n_clicks3, n_clicks4, D, T, o2_
 
 # Run the app
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run(host="0.0.0.0", port=8050, debug=True)

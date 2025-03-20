@@ -15,5 +15,7 @@ COPY . /app/
 RUN poetry install --no-root
 
 # Run app
+ENV PYTHONPATH=/app
 WORKDIR /app/src
+EXPOSE 8050
 CMD ["poetry", "run", "python", "app.py"]

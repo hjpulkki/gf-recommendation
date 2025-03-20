@@ -1,0 +1,11 @@
+Description=GF Server Docker Container
+After=network.target
+
+[Service]
+Restart=always
+ExecStart=/snap/bin/docker run -p 80:8050 gf-server
+ExecStop=/snap/bin/docker stop gf-server
+ExecStopPost=/snap/bin/docker rm gf-server
+
+[Install]
+WantedBy=multi-user.target
