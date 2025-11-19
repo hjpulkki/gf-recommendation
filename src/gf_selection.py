@@ -72,13 +72,13 @@ def standair_plot(D, T_ref, pdcs_ref):
     T = np.linspace(0, T_ref * 2, 100)
     fig = go.Figure()
 
-    for pdcs in [0.01, 0.015, 0.02, 0.025, 0.03,]:
-        TDT = get_standair_tdt(D, T, pdcs)
+    for pdcs_curve in [0.01, 0.015, 0.02, 0.025, 0.03]:
+        TDT = get_standair_tdt(D, T, pdcs_curve)
         fig.add_trace(go.Scatter(
             x=T,
             y=TDT,
             mode='lines',
-            name=f'pDCS = {pdcs}'
+            name=f'pDCS = {pdcs_curve}'
         ))
 
     TDT_ref = get_standair_tdt(D, T_ref, pdcs_ref)
@@ -99,7 +99,11 @@ def standair_plot(D, T_ref, pdcs_ref):
         template='plotly_white'
     )
     # fig.show()
-    print(f"According to the StandardAir model [7], the Total Decompression Time (TDT) for this dive should be {TDT_ref:.0f} minutes with probability of Decompression Sickness (DCS) being {100*pdcs:.1f}%.")
+    print(
+        "According to the StandardAir model [7], the Total Decompression Time (TDT) for this dive "
+        f"should be {TDT_ref:.0f} minutes with probability of Decompression Sickness (DCS) being "
+        f"{100 * pdcs_ref:.1f}%."
+    )
     return fig
 
 
