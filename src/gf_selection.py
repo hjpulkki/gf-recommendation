@@ -37,6 +37,26 @@ sfi = pd.read_csv(os.path.join(data_folder, "surface_interval.csv"))
 rnt = pd.read_csv(os.path.join(data_folder, "residual_nitrogen_time.csv"))
 
 
+def calculate_ead(depth_meters, o2_percentage, dive_mode="oc", o2_setpoint=1.3):
+    """Calculate Equivalent Air Depth (EAD).
+
+    For open-circuit dives the EAD is based on the inert fraction of the
+    supplied gas. For CCR dives the inert gas load is derived from the
+    constant oxygen setpoint. The result is limited to positive values to
+    avoid negative depths when the oxygen setpoint exceeds ambient pressure
+    (e.g. near the surface).
+    """
+
+    ambient_pressure = depth_meters / 10 + 1
+    if dive_mode == "ccr":
+        inert_pressure = max(ambient_pressure - o2_setpoint, 0)
+    else:
+        inert_pressure = ambient_pressure * (1 - o2_percentage / 100)
+
+    ead = ((inert_pressure / 0.79) - 1) * 10
+    return max(ead, 0)
+
+
 def get_standair_tdt(D, T, pdcs):
     D_feet = D * FEET_IN_METER
     logit = math.log(pdcs / (1 - pdcs))
