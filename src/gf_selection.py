@@ -103,7 +103,7 @@ def standair_plot(D, T_ref, pdcs_ref):
     return fig
 
 
-def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
+def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False, gas_label=None):
     dive_plan = DivePlan()
     dive_plan.setDefaults()
 
@@ -138,12 +138,12 @@ def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
     fig = None
     if plot_figure:
         fig = px.line(
-            x=[x.time/60 for x in dive_plan.profileSampled], 
-            y=[-x.depth for x in dive_plan.profileSampled], 
+            x=[x.time/60 for x in dive_plan.profileSampled],
+            y=[-x.depth for x in dive_plan.profileSampled],
         )
-        
+
         fig.update_layout(
-        title=f"Dive profile. Gas: {o2}/{he} GF: {dive_plan.GFlow*100:.0f}/{dive_plan.GFhigh*100:.0f}",
+        title=f"Dive profile. Gas: {gas_label or f'{o2}/{he}'} GF: {dive_plan.GFlow*100:.0f}/{dive_plan.GFhigh*100:.0f}",
             xaxis_title='Time',
             yaxis_title='Depth',
             legend=dict(title='Legend'),

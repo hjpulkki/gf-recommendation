@@ -14,6 +14,23 @@ app.title = "Dive Gradient Factor Calculator"
 server = app.server
 
 
+def derive_o2_percentage(dive_mode, depth_meters, o2_percentage, o2_setpoint):
+    """Return the appropriate oxygen percentage for the selected breathing system."""
+
+    if dive_mode == "ccr":
+        if not o2_setpoint:
+            o2_setpoint = 1.3
+        ambient_pressure = depth_meters / 10 + 1
+        if ambient_pressure <= 0:
+            return 100
+        fraction = max(min(o2_setpoint / ambient_pressure, 1), 0)
+        return fraction * 100
+
+    if o2_percentage is None:
+        return 21
+    return o2_percentage
+
+
 # Layout
 app.layout = html.Div(
     [
@@ -34,16 +51,30 @@ app.layout = html.Div(
                 dcc.Input(id="depth", type="number", value=30),
                 html.Label("Bottom time in minutes:"),
                 dcc.Input(id="time", type="number", value=50),
-                html.Label("Breathing system:"),
-                dcc.RadioItems(
-                    id="dive_mode",
-                    options=[
-                        {"label": "Open circuit", "value": "oc"},
-                        {"label": "CCR", "value": "ccr"},
+                html.Div(
+                    [
+                        html.Label("Breathing system:"),
+                        dcc.RadioItems(
+                            id="dive_mode",
+                            options=[
+                                {"label": "Open circuit", "value": "oc"},
+                                {"label": "CCR", "value": "ccr"},
+                            ],
+                            value="oc",
+                            labelStyle={"marginRight": "10px"},
+                            style={
+                                "marginBottom": "10px",
+                                "display": "flex",
+                                "gap": "10px",
+                                "justifyContent": "flex-start",
+                            },
+                        ),
                     ],
-                    value="oc",
-                    labelStyle={"marginRight": "10px"},
-                    style={"marginBottom": "10px"},
+                    style={
+                        "display": "flex",
+                        "flexDirection": "column",
+                        "alignItems": "flex-start",
+                    },
                 ),
                 html.Div(
                     [
@@ -412,7 +443,22 @@ def calculate_final_results(
         TDT = gf_selection.get_standair_tdt(EAD, T, pdcs)
         gf_high = gf_selection.fit_gf_to_tdt(T, EAD, TDT, he=he_percentage)
         gf_high -= max(37 - surface_time * 60 / 5, 0)
-        _, fig = gf_selection.get_gf_tdt(T, D, gf_high, he_percentage, o2_percentage, plot_figure=True)
+        he_percentage = he_percentage or 0
+        derived_o2 = derive_o2_percentage(dive_mode, D, o2_percentage, o2_setpoint)
+        gas_label = (
+            f"{derived_o2:.0f}% O₂ / {he_percentage}% He"
+            if dive_mode == "oc"
+            else f"{o2_setpoint:.1f} bar setpoint / {he_percentage}% He"
+        )
+        _, fig = gf_selection.get_gf_tdt(
+            T,
+            D,
+            gf_high,
+            he_percentage,
+            derived_o2,
+            plot_figure=True,
+            gas_label=gas_label,
+        )
         final_results = [dcc.Markdown("""# Current plan"""), dcc.Graph(figure=fig)]
         final_results_style = {"display": "block"}
     
