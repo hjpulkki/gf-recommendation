@@ -174,43 +174,47 @@ def second_dive_no_dec_time(first_dive_time, surface_time, D_feet):
     no_deco_time = (btt[planned_depth.astype(str)] - residual_nitrogen).max()
     return no_deco_time
 
-def get_max_ceiling(d_meters, dive_durations, surface_time, gf_high, plot_figure=False):
-    """Determine the maximum ceiling for the second dive, based on ZHL-16C model with symmetric gradient factors."""
-    first_dive_gf = 115
-
-    dive_plan = DivePlan()
-    dive_plan.setDefaults()
+def set_defaults_2(dive_plan):
+    dive_plan.bottomTime = dive_plan.diveDurations[0]
+    dive_plan.bottomDepth = dive_plan.diveDepths[0]
     
-    dive_plan.bottomTime = 60*dive_durations[0]
-    dive_plan.bottomDepth = d_meters
-    
-    dive_plan.maxDepth = dive_plan.bottomDepth
     dive_plan.descRate  =        99 / 60.0
     dive_plan.ascRateToDeco =    10 / 60.0
     dive_plan.ascRateAtDeco =    3  / 60.0
     dive_plan.ascRateToSurface = 1  / 60.0
     dive_plan.descTime = dive_plan.bottomDepth / dive_plan.descRate
-    
-    dive_plan.GFhigh = first_dive_gf/100
-    dive_plan.GFlow = first_dive_gf/100
-    
+
     # Set gasses for just air
     dive_plan.tankList[TankType.BOTTOM].o2 = 21
     dive_plan.tankList[TankType.BOTTOM].he = 0
     dive_plan.tankList[TankType.DECO1].use = False
     dive_plan.tankList[TankType.DECO2].use = False
     dive_plan.tankList[TankType.TRAVEL].use = False
-    
-    dive_plan.nDives = len(dive_durations)
+    dive_plan.nDives = len(dive_plan.diveDurations)
+
+    dive_plan.GFhigh = dive_plan.diveGFs[0]
+    dive_plan.GFlow = dive_plan.diveGFs[0]
+
+    return dive_plan
+
+def get_max_ceiling(depths, dive_durations, gf_highs, surface_time, plot_figure=False):
+    """Determine the maximum ceiling for the second dive, based on ZHL-16C model with symmetric gradient factors."""
+
+    dive_plan = DivePlan()
+    dive_plan.setDefaults()
+
     dive_plan.surfaceTime = surface_time
     dive_plan.diveDurations = [60*t for t in dive_durations]
-    dive_plan.diveGFs = [first_dive_gf/100, gf_high/100]
+    dive_plan.diveDepths = depths
+    dive_plan.diveGFs = [x/100 for x in gf_highs]
+
+    dive_plan = set_defaults_2(dive_plan)
 
     try:
         model_run = calculatePlan(dive_plan)
     except ValueError:
         # This is probably a deco dive because of going over the iteration limit
-        return -100
+        return 100
     
     if plot_figure:
         plt.plot([x.time/60 for x in dive_plan.profileSampled], [-x.depth for x in dive_plan.profileSampled])
