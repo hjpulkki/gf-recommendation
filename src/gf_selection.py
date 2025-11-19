@@ -37,6 +37,26 @@ sfi = pd.read_csv(os.path.join(data_folder, "surface_interval.csv"))
 rnt = pd.read_csv(os.path.join(data_folder, "residual_nitrogen_time.csv"))
 
 
+def calculate_ead(depth_meters, o2_percentage, dive_mode="oc", o2_setpoint=1.3):
+    """Calculate Equivalent Air Depth (EAD).
+
+    For open-circuit dives the EAD is based on the inert fraction of the
+    supplied gas. For CCR dives the inert gas load is derived from the
+    constant oxygen setpoint. The result is limited to positive values to
+    avoid negative depths when the oxygen setpoint exceeds ambient pressure
+    (e.g. near the surface).
+    """
+
+    ambient_pressure = depth_meters / 10 + 1
+    if dive_mode == "ccr":
+        inert_pressure = max(ambient_pressure - o2_setpoint, 0)
+    else:
+        inert_pressure = ambient_pressure * (1 - o2_percentage / 100)
+
+    ead = ((inert_pressure / 0.79) - 1) * 10
+    return max(ead, 0)
+
+
 def get_standair_tdt(D, T, pdcs):
     D_feet = D * FEET_IN_METER
     logit = math.log(pdcs / (1 - pdcs))
@@ -52,13 +72,13 @@ def standair_plot(D, T_ref, pdcs_ref):
     T = np.linspace(0, T_ref * 2, 100)
     fig = go.Figure()
 
-    for pdcs in [0.01, 0.015, 0.02, 0.025, 0.03,]:
-        TDT = get_standair_tdt(D, T, pdcs)
+    for pdcs_curve in [0.01, 0.015, 0.02, 0.025, 0.03]:
+        TDT = get_standair_tdt(D, T, pdcs_curve)
         fig.add_trace(go.Scatter(
             x=T,
             y=TDT,
             mode='lines',
-            name=f'pDCS = {pdcs}'
+            name=f'pDCS = {pdcs_curve}'
         ))
 
     TDT_ref = get_standair_tdt(D, T_ref, pdcs_ref)
@@ -79,11 +99,15 @@ def standair_plot(D, T_ref, pdcs_ref):
         template='plotly_white'
     )
     # fig.show()
-    print(f"According to the StandardAir model [7], the Total Decompression Time (TDT) for this dive should be {TDT_ref:.0f} minutes with probability of Decompression Sickness (DCS) being {100*pdcs:.1f}%.")
+    print(
+        "According to the StandardAir model [7], the Total Decompression Time (TDT) for this dive "
+        f"should be {TDT_ref:.0f} minutes with probability of Decompression Sickness (DCS) being "
+        f"{100 * pdcs_ref:.1f}%."
+    )
     return fig
 
 
-def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
+def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False, gas_label=None):
     dive_plan = DivePlan()
     dive_plan.setDefaults()
 
@@ -118,12 +142,12 @@ def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False):
     fig = None
     if plot_figure:
         fig = px.line(
-            x=[x.time/60 for x in dive_plan.profileSampled], 
-            y=[-x.depth for x in dive_plan.profileSampled], 
+            x=[x.time/60 for x in dive_plan.profileSampled],
+            y=[-x.depth for x in dive_plan.profileSampled],
         )
-        
+
         fig.update_layout(
-        title=f"Dive profile. Gas: {o2}/{he} GF: {dive_plan.GFlow*100:.0f}/{dive_plan.GFhigh*100:.0f}",
+        title=f"Dive profile. Gas: {gas_label or f'{o2}/{he}'} GF: {dive_plan.GFlow*100:.0f}/{dive_plan.GFhigh*100:.0f}",
             xaxis_title='Time',
             yaxis_title='Depth',
             legend=dict(title='Legend'),

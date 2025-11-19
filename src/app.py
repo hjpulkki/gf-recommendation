@@ -14,6 +14,23 @@ app.title = "Dive Gradient Factor Calculator"
 server = app.server
 
 
+def derive_o2_percentage(dive_mode, depth_meters, o2_percentage, o2_setpoint):
+    """Return the appropriate oxygen percentage for the selected breathing system."""
+
+    if dive_mode == "ccr":
+        if not o2_setpoint:
+            o2_setpoint = 1.3
+        ambient_pressure = depth_meters / 10 + 1
+        if ambient_pressure <= 0:
+            return 100
+        fraction = max(min(o2_setpoint / ambient_pressure, 1), 0)
+        return fraction * 100
+
+    if o2_percentage is None:
+        return 21
+    return o2_percentage
+
+
 # Layout
 app.layout = html.Div(
     [
@@ -34,8 +51,46 @@ app.layout = html.Div(
                 dcc.Input(id="depth", type="number", value=30),
                 html.Label("Bottom time in minutes:"),
                 dcc.Input(id="time", type="number", value=50),
-                html.Label("Oxygen percentage:"),
-                dcc.Input(id="o2_percentage", type="number", value=34),
+                html.Div(
+                    [
+                        html.Label("Breathing system:"),
+                        dcc.RadioItems(
+                            id="dive_mode",
+                            options=[
+                                {"label": "Open circuit", "value": "oc"},
+                                {"label": "CCR", "value": "ccr"},
+                            ],
+                            value="oc",
+                            labelStyle={"marginRight": "10px"},
+                            style={
+                                "marginBottom": "10px",
+                                "display": "flex",
+                                "gap": "10px",
+                                "justifyContent": "flex-start",
+                            },
+                        ),
+                    ],
+                    style={
+                        "display": "flex",
+                        "flexDirection": "column",
+                        "alignItems": "flex-start",
+                    },
+                ),
+                html.Div(
+                    [
+                        html.Label("Oxygen percentage:"),
+                        dcc.Input(id="o2_percentage", type="number", value=34),
+                    ],
+                    id="open-circuit-settings",
+                ),
+                html.Div(
+                    [
+                        html.Label("Oxygen setpoint (bar):"),
+                        dcc.Input(id="o2_setpoint", type="number", value=1.3, step=0.1),
+                    ],
+                    id="ccr-settings",
+                    style={"display": "none"},
+                ),
                 html.Button("Next", id="initial-calculate-button", n_clicks=0),
                 html.Div(id="initial-results", style={"marginTop": "10px"}),
             ],
@@ -204,6 +259,17 @@ app.layout = html.Div(
     ]
 )
 
+
+@app.callback(
+    Output("open-circuit-settings", "style"),
+    Output("ccr-settings", "style"),
+    Input("dive_mode", "value"),
+)
+def toggle_dive_mode_settings(dive_mode):
+    if dive_mode == "ccr":
+        return {"display": "none"}, {"display": "block"}
+    return {"display": "block"}, {"display": "none"}
+
 # Callback for initial calculation
 @app.callback(
     Output("initial-results", "children"),
@@ -213,16 +279,29 @@ app.layout = html.Div(
     Input("initial-calculate-button", "n_clicks"),
     State("depth", "value"),
     State("time", "value"),
-    State("o2_percentage", "value")
+    State("o2_percentage", "value"),
+    State("dive_mode", "value"),
+    State("o2_setpoint", "value"),
 )
-def calculate_initial_results(n_clicks, D, T, o2_percentage):
+def calculate_initial_results(n_clicks, D, T, o2_percentage, dive_mode, o2_setpoint):
     if n_clicks == 0:
         return "", {"display": "none"}, {"display": "none"}, 30
 
+    if o2_setpoint is None:
+        o2_setpoint = 1.3
+
     # Perform initial calculations
     prt = (D / 10 + 1) * math.sqrt(T)
-    P_inert_gas = (D / 10 + 1) * (1 - o2_percentage / 100)
-    EAD = (P_inert_gas / 0.79 - 1) * 10
+    EAD = gf_selection.calculate_ead(D, o2_percentage, dive_mode, o2_setpoint)
+
+    if dive_mode == "ccr":
+        gas_description = (
+            f"For CCR diving, the equivalent air depth is calculated from the {o2_setpoint:.1f} bar oxygen setpoint."
+        )
+    else:
+        gas_description = (
+            f"For open-circuit diving the inert gas load is based on {o2_percentage:.0f}% oxygen."
+        )
 
     initial_results = f"""
     As the first step we will calculate Pressure Root Time (PRT) for your dive, which is pressure at the bottom (in bar) multiplied by the square root of bottom time (in minutes). PRT can be thought of a measure of nitrogen load.
@@ -234,6 +313,8 @@ def calculate_initial_results(n_clicks, D, T, o2_percentage):
     We can also calculate the equivalent air depth (EAD). It can be used to plan a dive with similar nitrogen load and decompression obligation to be approximated using the StandardAir model. [[7]](#references)
 
     Equivalent Air Depth (EAD): {EAD:.1f} meters
+
+    {gas_description}
     """
 
     return dcc.Markdown(initial_results), {"display": "block"}, {"display": "block"}, EAD
@@ -330,23 +411,54 @@ def calculate_surface_time_results(n_clicks, surface_time, gf_high):
     State("depth", "value"),
     State("time", "value"),
     State("o2_percentage", "value"),
+    State("dive_mode", "value"),
+    State("o2_setpoint", "value"),
     State("pdcs", "value"),
     State("he_percentage", "value"),
     State("surface_time", "value"),
 )
-def calculate_final_results(n_clicks, n_clicks2, n_clicks3, n_clicks4, D, T, o2_percentage, pdcs_percentage, he_percentage, surface_time):
+def calculate_final_results(
+    n_clicks,
+    n_clicks2,
+    n_clicks3,
+    n_clicks4,
+    D,
+    T,
+    o2_percentage,
+    dive_mode,
+    o2_setpoint,
+    pdcs_percentage,
+    he_percentage,
+    surface_time,
+):
     pdcs = pdcs_percentage/100
     final_results = ""
     low_gradient_info = {"display": "none"}
     during_dive = {"display": "none"}
     final_results_style = {"display": "none"}
     if n_clicks2 > 0:
-        P_inert_gas = (D / 10 + 1) * (1 - o2_percentage / 100)
-        EAD = (P_inert_gas / 0.79 - 1) * 10
+        if o2_setpoint is None:
+            o2_setpoint = 1.3
+        EAD = gf_selection.calculate_ead(D, o2_percentage, dive_mode, o2_setpoint)
         TDT = gf_selection.get_standair_tdt(EAD, T, pdcs)
         gf_high = gf_selection.fit_gf_to_tdt(T, EAD, TDT, he=he_percentage)
         gf_high -= max(37 - surface_time * 60 / 5, 0)
-        _, fig = gf_selection.get_gf_tdt(T, D, gf_high, he_percentage, o2_percentage, plot_figure=True)
+        he_percentage = he_percentage or 0
+        derived_o2 = derive_o2_percentage(dive_mode, D, o2_percentage, o2_setpoint)
+        gas_label = (
+            f"{derived_o2:.0f}% O₂ / {he_percentage}% He"
+            if dive_mode == "oc"
+            else f"{o2_setpoint:.1f} bar setpoint / {he_percentage}% He"
+        )
+        _, fig = gf_selection.get_gf_tdt(
+            T,
+            D,
+            gf_high,
+            he_percentage,
+            derived_o2,
+            plot_figure=True,
+            gas_label=gas_label,
+        )
         final_results = [dcc.Markdown("""# Current plan"""), dcc.Graph(figure=fig)]
         final_results_style = {"display": "block"}
     
