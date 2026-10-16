@@ -107,54 +107,73 @@ def standair_plot(D, T_ref, pdcs_ref):
     return fig
 
 
-def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False, gas_label=None):
+def calculate_dive_plan(T, D, gf_high, gf_low, o2, he, plot_figure=False):
     dive_plan = DivePlan()
     dive_plan.setDefaults()
 
-    dive_plan.bottomTime = T*60
+    dive_plan.bottomTime = T * 60
     dive_plan.bottomDepth = D
-    
+
     dive_plan.maxDepth = dive_plan.bottomDepth
-    dive_plan.descRate  =        99 / 60.0
-    dive_plan.ascRateToDeco =    10 / 60.0
-    dive_plan.ascRateAtDeco =    3  / 60.0
-    dive_plan.ascRateToSurface = 1  / 60.0
+    dive_plan.descRate = 99 / 60.0
+    dive_plan.ascRateToDeco = 10 / 60.0
+    dive_plan.ascRateAtDeco = 3 / 60.0
+    dive_plan.ascRateToSurface = 1 / 60.0
     dive_plan.descTime = dive_plan.bottomDepth / dive_plan.descRate
 
-    dive_plan.GFhigh = gf_high/100
-    dive_plan.GFlow = gf_high/100
+    dive_plan.GFhigh = gf_high / 100
+    dive_plan.GFlow = gf_low / 100
 
-    # Set gasses for just air
     dive_plan.tankList[TankType.BOTTOM].o2 = o2
     dive_plan.tankList[TankType.BOTTOM].he = he
     dive_plan.tankList[TankType.DECO1].use = False
     dive_plan.tankList[TankType.DECO2].use = False
     dive_plan.tankList[TankType.TRAVEL].use = False
 
-    try:
-        model_run = calculatePlan(dive_plan)
-    except ValueError:
-        return -1
-
-    dive_time = dive_plan.profileSampled[-1].time/60
-    tdt_gf = dive_time-T
+    model_run = calculatePlan(dive_plan)
+    
 
     fig = None
     if plot_figure:
         fig = px.line(
-            x=[x.time/60 for x in dive_plan.profileSampled],
+            x=[x.time / 60 for x in dive_plan.profileSampled],
             y=[-x.depth for x in dive_plan.profileSampled],
         )
 
         fig.update_layout(
-        title=f"Dive profile. Gas: {gas_label or f'{o2}/{he}'} GF: {dive_plan.GFlow*100:.0f}/{dive_plan.GFhigh*100:.0f}",
-            xaxis_title='Time',
-            yaxis_title='Depth',
-            legend=dict(title='Legend'),
-            template='plotly_white'
+            title=f"Dive profile. Gas: {o2}/{he} "
+                  f"GF: {gf_low:.0f}/{gf_high:.0f}",
+            xaxis_title="Time",
+            yaxis_title="Depth",
+            legend=dict(title="Legend"),
+            template="plotly_white",
+        )
+
+    return dive_plan, model_run, fig
+
+
+def get_gf_tdt(T, D, gf_high, he, o2, plot_figure=False, gas_label=None):
+    dive_plan, model_run, fig = calculate_dive_plan(
+        T=T,
+        D=D,
+        gf_high=gf_high,
+        gf_low=gf_high,
+        o2=o2,
+        he=he,
+        plot_figure=plot_figure,
+    )
+
+    dive_time = dive_plan.profileSampled[-1].time / 60
+    tdt_gf = dive_time - T
+
+    if plot_figure:
+        fig.update_layout(
+            title=f"Dive profile. Gas: {gas_label or f'{o2}/{he}'} "
+                  f"GF: {gf_high:.0f}/{gf_high:.0f}"
         )
 
     return tdt_gf, fig
+
 
 def fit_gf_to_tdt(T, D, TDT, he=0, o2=21, verbose=False):
     for gf_high in range(100, 5, -1):
